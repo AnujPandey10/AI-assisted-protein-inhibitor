@@ -1,0 +1,5 @@
+{
+  "name": "HelixGen - Generative Protein Design",
+  "description": "Accelerate drug discovery by rapidly generating and analyzing novel protein sequences using Gemini AI.",
+  "requestFramePermissions": []
+}
