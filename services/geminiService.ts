@@ -1,5 +1,6 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import { DesignRequest, ProteinCandidate } from "../types";
+import { calculateMolecularWeight, calculateStabilityScore, validateSequence } from "../utils/biophysics";
 
 // Initialize Gemini Client
 // Note: API key is pulled from environment variables as per instructions.
@@ -52,11 +53,23 @@ export const generateProteins = async (request: DesignRequest): Promise<ProteinC
 
     const data = JSON.parse(response.text || "[]");
     
-    // Add IDs locally
-    return data.map((item: any, index: number) => ({
-      ...item,
-      id: `cand-${Date.now()}-${index}`
-    }));
+    // Process and validate candidates with biophysics engine
+    return data
+      .filter((item: any) => validateSequence(item.sequence)) // Filter invalid sequences
+      .map((item: any, index: number) => {
+        // Overwrite hallucinated values with calculated ones
+        const calculatedWeight = calculateMolecularWeight(item.sequence);
+        const calculatedStability = calculateStabilityScore(item.sequence);
+
+        return {
+          ...item,
+          id: `cand-${Date.now()}-${index}`,
+          molecularWeight: calculatedWeight,
+          stabilityScore: calculatedStability,
+          // Add a flag to indicate these are verified values
+          verificationStatus: "CALCULATED"
+        };
+      });
 
   } catch (error) {
     console.error("Gemini Protein Generation Error:", error);
